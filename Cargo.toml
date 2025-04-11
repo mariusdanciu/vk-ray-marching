@@ -1,0 +1,12 @@
+[package]
+name = "vk-ray-marching"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vulkano = "0.35.0"
+vulkano-win = "0.34.0"
+vulkano-macros = "0.35.0"
+winit = "0.30"
+vulkano-shaders = "0.35.0"
+glam="0.28.0"
