@@ -61,7 +61,7 @@ struct App {
     command_buffer_allocator: Arc<StandardCommandBufferAllocator>,
     vertex_buffer: Subbuffer<[MyVertex]>,
     rcx: Option<RenderContext>,
-    camera: Camera,
+    camera: Camera
 }
 
 struct RenderContext {
@@ -192,7 +192,7 @@ impl App {
 
         let rcx = None;
 
-        let camera = Camera::new_with_pos(Vec3::new(0., 1.4, 8.0), Vec3::new(0., 0., -1.));
+        let camera = Camera::new_with_pos(Vec3::new(0., 1., 8.0), Vec3::new(0., 0., -1.));
 
         App {
             instance,

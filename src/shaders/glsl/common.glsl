@@ -17,6 +17,11 @@ struct Hit {
     bool hit;
 };
 
+struct DirectionalLight {
+    vec3 direction;
+    vec3 color;
+};
+
 float sphere_sdf(vec3 p, float r) {
     return length(p) - r;
 }
