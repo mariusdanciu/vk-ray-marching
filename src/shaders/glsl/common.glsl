@@ -5,8 +5,20 @@ struct Camera {
     vec3 ww;
 };
 
+struct Ray {
+    vec3 origin;
+    vec3 direction;
+};
+
+struct Hit {
+    float dist;
+    uint material_index;
+    vec3 color;
+    bool hit;
+};
+
 float sphere_sdf(vec3 p, float r) {
-    return p.length() - r;
+    return length(p) - r;
 }
 
 float box_sdf(vec3 p, vec3 dimension, float corner_radius) {

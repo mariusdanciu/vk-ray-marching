@@ -1,4 +1,5 @@
-
+use camera::Camera;
+use glam::Vec3;
 use std::{error::Error, sync::Arc};
 use vulkano::{
     buffer::{Buffer, BufferContents, BufferCreateInfo, BufferUsage, Subbuffer},
@@ -35,7 +36,7 @@ use vulkano::{
 };
 use winit::{
     application::ApplicationHandler,
-    event::{ElementState, Event, KeyEvent, WindowEvent},
+    event::{ElementState, KeyEvent, WindowEvent},
     event_loop::{ActiveEventLoop, EventLoop},
     keyboard::{KeyCode, PhysicalKey},
     window::{Window, WindowId},
@@ -60,6 +61,7 @@ struct App {
     command_buffer_allocator: Arc<StandardCommandBufferAllocator>,
     vertex_buffer: Subbuffer<[MyVertex]>,
     rcx: Option<RenderContext>,
+    camera: Camera,
 }
 
 struct RenderContext {
@@ -96,12 +98,10 @@ impl App {
             ..DeviceExtensions::empty()
         };
 
-         let (physical_device, queue_family_index) = instance
+        let (physical_device, queue_family_index) = instance
             .enumerate_physical_devices()
             .unwrap()
-            .filter(|p| {
-                p.supported_extensions().contains(&device_extensions)
-            })
+            .filter(|p| p.supported_extensions().contains(&device_extensions))
             .filter_map(|p| {
                 p.queue_family_properties()
                     .iter()
@@ -192,6 +192,8 @@ impl App {
 
         let rcx = None;
 
+        let camera = Camera::new_with_pos(Vec3::new(0., 1.4, 8.0), Vec3::new(0., 0., -1.));
+
         App {
             instance,
             device,
@@ -199,6 +201,7 @@ impl App {
             command_buffer_allocator,
             vertex_buffer,
             rcx,
+            camera
         }
     }
 }
@@ -239,7 +242,7 @@ impl ApplicationHandler for App {
                         .into_iter()
                         .next()
                         .unwrap(),
-
+                    //present_mode: vulkano::swapchain::PresentMode::Immediate,
                     ..Default::default()
                 },
             )
@@ -276,7 +279,7 @@ impl ApplicationHandler for App {
 
             let vertex_input_state = MyVertex::per_vertex().definition(&vs).unwrap();
 
-           let stages = [
+            let stages = [
                 PipelineShaderStageCreateInfo::new(vs),
                 PipelineShaderStageCreateInfo::new(fs),
             ];
@@ -404,10 +407,10 @@ impl ApplicationHandler for App {
 
                 let pc_screen = fragment::AppData {
                     screen: [(window_size.width as f32), (window_size.height as f32)].into(),
-                    cam_position: [0.0, 0.0, 0.0].into(),
-                    cam_uu: [0.0, 0.0, 0.0].into(),
-                    cam_vv: [0.0, 0.0, 0.0].into(),
-                    cam_ww:[0.0, 0.0, 0.0].into(),
+                    cam_position: self.camera.position.to_array().into(),
+                    cam_uu: self.camera.uu.to_array().into(),
+                    cam_vv: self.camera.vv.to_array().into(),
+                    cam_ww: self.camera.ww.to_array().into(),
                 };
 
                 let layout = rcx.pipeline.layout().clone();
@@ -422,8 +425,7 @@ impl ApplicationHandler for App {
                 builder
                     .begin_render_pass(
                         RenderPassBeginInfo {
-                            clear_values: vec![Some([0.0, 0.0, 1.0, 1.0].into())],
-
+                            clear_values: vec![Some([0.0, 0.0, 0.0, 1.0].into())],
                             ..RenderPassBeginInfo::framebuffer(
                                 rcx.framebuffers[image_index as usize].clone(),
                             )
@@ -434,7 +436,7 @@ impl ApplicationHandler for App {
                         },
                     )
                     .unwrap()
-                     .set_viewport(0, [rcx.viewport.clone()].into_iter().collect())
+                    .set_viewport(0, [rcx.viewport.clone()].into_iter().collect())
                     .unwrap()
                     .push_constants(layout, 0, pc_screen)
                     .unwrap()
@@ -446,11 +448,13 @@ impl ApplicationHandler for App {
                 // We add a draw command.
                 unsafe { builder.draw(self.vertex_buffer.len() as u32, 1, 0, 0) }.unwrap();
 
-                builder
-                    .end_render_pass(Default::default())
-                    .unwrap();
+                builder.end_render_pass(Default::default()).unwrap();
 
                 let command_buffer = builder.build().unwrap();
+
+                let mut sc_info =
+                    SwapchainPresentInfo::swapchain_image_index(rcx.swapchain.clone(), image_index);
+                //sc_info.present_mode = Some(vulkano::swapchain::PresentMode::Fifo);
 
                 let future = rcx
                     .previous_frame_end
@@ -459,13 +463,7 @@ impl ApplicationHandler for App {
                     .join(acquire_future)
                     .then_execute(self.queue.clone(), command_buffer)
                     .unwrap()
-                    .then_swapchain_present(
-                        self.queue.clone(),
-                        SwapchainPresentInfo::swapchain_image_index(
-                            rcx.swapchain.clone(),
-                            image_index,
-                        ),
-                    )
+                    .then_swapchain_present(self.queue.clone(), sc_info)
                     .then_signal_fence_and_flush();
 
                 match future.map_err(Validated::unwrap) {
