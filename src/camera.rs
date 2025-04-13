@@ -37,8 +37,8 @@ impl Camera {
     }
 
     pub fn update(&mut self, events: &Vec<CameraEvent>, ts: f32) {
-        let speed = 5.;
-        let rotation_speed = 5.;
+        let speed = 2.;
+        let rotation_speed = 2.;
         for event in events {
             match event {
                 CameraEvent::Up => self.position += self.ww * speed * ts,
@@ -50,7 +50,7 @@ impl Camera {
                 }
 
                 CameraEvent::RotateXY { delta } => {
-                    let pitch_delta = delta.y * rotation_speed;
+                    let pitch_delta = -delta.y * rotation_speed;
                     let yaw_delta = -delta.x * rotation_speed;
 
                     let rotation = Mat4::from_rotation_x(pitch_delta as f32 * DEGREES)
