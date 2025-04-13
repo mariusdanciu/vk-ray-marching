@@ -54,6 +54,7 @@ pub struct App {
     render_ctx: Option<RenderContext>,
     camera: Camera,
     mouse_pressed: bool,
+    last_mouse_pos: Vec2,
     cam_rotation: Option<Vec2>,
     frame_time: Instant,
 }
@@ -197,6 +198,7 @@ impl App {
             render_ctx: rcx,
             camera,
             mouse_pressed: false,
+            last_mouse_pos: Vec2::ZERO,
             cam_rotation: None,
             frame_time: Instant::now(),
         }
@@ -346,6 +348,7 @@ impl ApplicationHandler for App {
         if !events.is_empty() {
             self.camera.update(&events, ts);
         }
+        self.cam_rotation = None;
         self.frame_time = Instant::now();
     }
 
@@ -356,15 +359,7 @@ impl ApplicationHandler for App {
         event: DeviceEvent,
     ) {
         match event {
-            DeviceEvent::MouseMotion { delta } => {
-                if self.mouse_pressed {
-                    let delta = Vec2::new(delta.0 as f32, delta.1 as f32) * 0.05;
-
-                    if delta.x != 0.0 || delta.y != 0.0 {
-                        self.cam_rotation = Some(delta);
-                    }
-                }
-            }
+            DeviceEvent::MouseMotion { delta } => {}
 
             _ => {}
         }
@@ -392,16 +387,41 @@ impl ApplicationHandler for App {
                 event_loop.exit();
             }
 
+            WindowEvent::CursorMoved {
+                device_id,
+                position,
+            } => {
+                let pos = Vec2::new(position.x as f32, position.y as f32);
+                if self.mouse_pressed {
+                    if self.last_mouse_pos == Vec2::ZERO {
+                        self.last_mouse_pos = pos;
+                    }
+                    let delta = (pos - self.last_mouse_pos) * 0.05;
+                    self.last_mouse_pos = pos;
+                    if delta.x != 0.0 || delta.y != 0.0 {
+                        self.cam_rotation = Some(delta);
+                    }
+                }
+            }
             WindowEvent::MouseInput {
                 device_id,
                 state,
                 button,
             } => {
                 self.mouse_pressed = state.is_pressed();
-                self.render_ctx.as_mut().unwrap().window.set_cursor_visible(false);
+                self.render_ctx
+                    .as_mut()
+                    .unwrap()
+                    .window
+                    .set_cursor_visible(false);
                 if !self.mouse_pressed {
-                    self.render_ctx.as_mut().unwrap().window.set_cursor_visible(true);
+                    self.render_ctx
+                        .as_mut()
+                        .unwrap()
+                        .window
+                        .set_cursor_visible(true);
                     self.cam_rotation = None;
+                    self.last_mouse_pos = Vec2::ZERO;
                 }
             }
             WindowEvent::CloseRequested => {
