@@ -56,6 +56,10 @@ pub struct App {
     mouse_pressed: bool,
     last_mouse_pos: Vec2,
     cam_rotation: Option<Vec2>,
+    cam_up: bool,
+    cam_down: bool,
+    cam_left: bool,
+    cam_right: bool,
     frame_time: Instant,
 }
 
@@ -200,6 +204,10 @@ impl App {
             mouse_pressed: false,
             last_mouse_pos: Vec2::ZERO,
             cam_rotation: None,
+            cam_down: false,
+            cam_left: false,
+            cam_right: false,
+            cam_up: false,
             frame_time: Instant::now(),
         }
     }
@@ -342,6 +350,18 @@ impl ApplicationHandler for App {
         let ts = elapsed.as_secs_f32();
 
         let mut events: Vec<CameraEvent> = vec![];
+        if self.cam_up {
+            events.push(CameraEvent::Up)
+        }
+        if self.cam_down {
+            events.push(CameraEvent::Down)
+        }
+        if self.cam_left {
+            events.push(CameraEvent::Left)
+        }
+        if self.cam_right {
+            events.push(CameraEvent::Right)
+        }
         if let Some(delta) = self.cam_rotation {
             events.push(CameraEvent::RotateXY { delta })
         }
@@ -350,19 +370,6 @@ impl ApplicationHandler for App {
         }
         self.cam_rotation = None;
         self.frame_time = Instant::now();
-    }
-
-    fn device_event(
-        &mut self,
-        event_loop: &ActiveEventLoop,
-        device_id: winit::event::DeviceId,
-        event: DeviceEvent,
-    ) {
-        match event {
-            DeviceEvent::MouseMotion { delta } => {}
-
-            _ => {}
-        }
     }
 
     fn window_event(
@@ -386,6 +393,31 @@ impl ApplicationHandler for App {
             } => {
                 event_loop.exit();
             }
+
+            WindowEvent::KeyboardInput {
+                event:
+                    KeyEvent {
+                        physical_key,
+                        state,
+                        repeat: false,
+                        ..
+                    },
+                ..
+            } => match physical_key {
+                PhysicalKey::Code(KeyCode::KeyW) => {
+                    self.cam_up = state.is_pressed();
+                }
+                PhysicalKey::Code(KeyCode::KeyS) => {
+                    self.cam_down = state.is_pressed();
+                }
+                PhysicalKey::Code(KeyCode::KeyA) => {
+                    self.cam_left = state.is_pressed();
+                }
+                PhysicalKey::Code(KeyCode::KeyD) => {
+                    self.cam_right = state.is_pressed();
+                }
+                _ => {}
+            },
 
             WindowEvent::CursorMoved {
                 device_id,
