@@ -74,10 +74,8 @@ Hit ray_march(Ray ray) {
     return Hit(t, 0, vec3(0), false);
 }
 
-vec3 path_trace(Ray ray) {
-    DirectionalLight d_light = DirectionalLight(normalize(vec3(-3., -1.5, -2.)), vec3(1., 0.85, 0.70));
+vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky) {
     Hit hit = ray_march(ray);
-    vec3 col = vec3(0);
     
     if (hit.hit) {
         vec3 p = ray.origin + ray.direction * hit.dist;
@@ -85,7 +83,7 @@ vec3 path_trace(Ray ray) {
         vec3 light_dir = -d_light.direction;
         float occlusion = occlusion(p, n);
 
-        col = hit.color;
+        vec3 col = hit.color;
 
         float sun = clamp(dot(n, light_dir), 0.0, 1.0);
 
@@ -93,9 +91,10 @@ vec3 path_trace(Ray ray) {
         light *= occlusion;
 
         col *= light;
+        return col;
     }
 
-    return col;
+    return res;
 }
 
 vec3 run(vec2 coord, vec2 screen, Camera camera) {
@@ -103,9 +102,26 @@ vec3 run(vec2 coord, vec2 screen, Camera camera) {
     p.y = -p.y;
 
     Ray ray = Ray(camera.position, normalize(p.x * camera.uu + p.y * camera.vv + 1.5 * camera.ww));
+    DirectionalLight d_light = DirectionalLight(normalize(vec3(-3., -1.5, -2.)), vec3(1., 0.85, 0.70));
 
-    vec3 col = path_trace(ray);
+    vec3 sky = clamp(vec3(0.5, 0.8, 1.) - (0.7 * ray.direction.y), 0.0, 1.0);
 
-    col = pow(col, vec3(0.4545));
-    return col;
+    sky = mix(
+        sky,
+        vec3(0.5, 0.7, 0.9),
+        exp(-10.0 * max(ray.direction.y, 0.0))
+    );
+
+    vec3 res = sky;
+
+    float sundot = clamp(dot(ray.direction, -d_light.direction), 0.0, 1.0);
+
+    res += 0.25 * vec3(1.0, 0.7, 0.4) * pow(sundot, 5.0);
+    res += 0.25 * vec3(1.0, 0.6, 0.6) * pow(sundot, 64.0);
+    res += 0.25 * vec3(1.0, 0.9, 0.6) * pow(sundot, 512.0);
+
+    res = path_trace(ray, d_light, res, sky);
+
+    res = pow(res, vec3(0.4545));
+    return res;
 }
