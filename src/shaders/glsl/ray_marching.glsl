@@ -58,6 +58,25 @@ float occlusion(vec3 pos, vec3 nor) {
     return 1.0 - clamp(occ, 0.0, 1.0);
 }
 
+float shadow(Ray ray, float k) {
+    float res = 1.0;
+
+    float t = 0.01;
+
+    for (int i = 0; i < 64; i++) {
+        vec3 pos = ray.origin + ray.direction * t;
+        float h = sdf(ray, t).dist;
+
+        res = min(res, k * (max(h, 0.0) / t));
+        if (res < 0.0001) {
+            break;
+        }
+        t += clamp(h, 0.01, 5.0);
+    }
+
+    return res;
+}
+
 Hit ray_march(Ray ray) {
     float t = 0.0;
     for(int i = 0; i < MAX_STEPS; i++) {
@@ -86,9 +105,14 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky) {
         vec3 col = hit.color;
 
         float sun = clamp(dot(n, light_dir), 0.0, 1.0);
+        float shd = shadow(Ray(p + n * 0.0001, light_dir), 32.);
 
-        float light = sun;
+        vec3 light = sun * d_light.color;
+        
         light *= occlusion;
+        light *= shd;
+
+        // light += shadow * d_light.color; 
 
         col *= light;
         return col;
