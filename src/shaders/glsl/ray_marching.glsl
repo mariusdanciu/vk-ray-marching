@@ -46,10 +46,9 @@ vec3 normal(vec3 p) {
 float occlusion(vec3 pos, vec3 nor) {
     float occ = 0.0;
     float sca = 1.0;
-    for (int i = 0; i < 5; i++) {
+    for(int i = 0; i < 5; i++) {
         float hr = 0.02 + 0.025 * (i * i);
 
-        
         Hit hit = sdf(Ray(pos, nor), hr);
 
         occ += -(hit.dist - hr) * sca;
@@ -63,12 +62,12 @@ float shadow(Ray ray, float k) {
 
     float t = 0.01;
 
-    for (int i = 0; i < 64; i++) {
+    for(int i = 0; i < 64; i++) {
         vec3 pos = ray.origin + ray.direction * t;
         float h = sdf(ray, t).dist;
 
         res = min(res, k * (max(h, 0.0) / t));
-        if (res < 0.0001) {
+        if(res < 0.0001) {
             break;
         }
         t += clamp(h, 0.01, 5.0);
@@ -95,22 +94,26 @@ Hit ray_march(Ray ray) {
 
 vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky) {
     Hit hit = ray_march(ray);
-    
-    if (hit.hit) {
+
+    if(hit.hit) {
         vec3 p = ray.origin + ray.direction * hit.dist;
         vec3 n = normal(p);
         vec3 light_dir = -d_light.direction;
         float occlusion = occlusion(p, n);
+        float shadow = shadow(Ray(p + n * 0.0001, light_dir), 32);
+
+        vec3 half_angle = normalize(-ray.direction + light_dir);
+        float shininess = pow(max(dot(n, half_angle), 0.), 120.0);
 
         vec3 col = hit.color;
 
         float sun = clamp(dot(n, light_dir), 0.0, 1.0);
-        float shd = shadow(Ray(p + n * 0.0001, light_dir), 32.);
 
         vec3 light = sun * d_light.color;
-        
+        light *= shadow;
         light *= occlusion;
-        light *= shd;
+
+        light += 1.1 * shininess * shadow * d_light.color;
 
         // light += shadow * d_light.color; 
 
@@ -130,11 +133,7 @@ vec3 run(vec2 coord, vec2 screen, Camera camera) {
 
     vec3 sky = clamp(vec3(0.5, 0.8, 1.) - (0.7 * ray.direction.y), 0.0, 1.0);
 
-    sky = mix(
-        sky,
-        vec3(0.5, 0.7, 0.9),
-        exp(-10.0 * max(ray.direction.y, 0.0))
-    );
+    sky = mix(sky, vec3(0.5, 0.7, 0.9), exp(-10.0 * max(ray.direction.y, 0.0)));
 
     vec3 res = sky;
 
