@@ -510,9 +510,9 @@ impl ApplicationHandler for App {
                     cam_ww: self.camera.ww.to_array().into(),
                     materials: [
                         fragment::Material {
-                            specular: 0.5.into(),
-                            shininess: 120.0.into(),
-                            color: vec3(0.9, 0.0, 0.0).to_array().into()
+                            specular: 1.9.into(),
+                            shininess: 220.0.into(),
+                            color: vec3(0.7, 0.0, 0.0).to_array().into()
                         }.into(),
                         fragment::Material {
                             specular: 0.8.into(),

@@ -37,7 +37,7 @@ impl Camera {
     }
 
     pub fn update(&mut self, events: &Vec<CameraEvent>, ts: f32) {
-        let speed = 5.;
+        let speed = 7.;
         let rotation_speed = 2.;
         for event in events {
             match event {

@@ -5,25 +5,46 @@
 #define HIT_PRECISION 0.001
 #define MAX_DISTANCE 100.0
 
+vec3 repeat(vec3 pos, float offset) {
+    return vec3(mod(pos.x + offset * 0.5, offset) - offset * 0.5, pos.y, mod(pos.z + offset * 0.5, offset) - offset * 0.5);
+}
+
+vec3 opRepLim( vec3 p,  float s,  float lima,  float limb ){
+    return vec3( p.x-s*clamp(round(p.x/s),lima,limb),
+            p.y,
+            p.z-s*clamp(round(p.z/s),lima,limb)
+    );
+}
+
+
 Hit sdf(Ray ray, float t) {
-    float d = 1000.;
 
     vec3 p = ray.origin + ray.direction * t;
 
     float d1 = p.y;
-    float d2 = sphere_sdf(p - vec3(-0.5, 0.5, 3.), 0.5);
-    d = d1;
+    float d4 = 0;
+    float d = d1;
 
-    d = min(d, d2);
+    {
+        vec3 q = p;
+
+        float d2 = sphere_sdf(opRepLim(q - vec3(-0.5, 0.5, 3.), 2, -2, 2), 0.5);
+        float d3 = sphere_sdf(opRepLim(q - vec3(-0.5, 1.0, 3.), 2, -2, 2), 0.1);
+        d4 = smooth_min(d3, d2, 0.7);
+        //d4 += 0.4;
+        d = min(d, d4);
+    }
+
     vec3 col = vec3(0, 0, 0);
 
     int material = 1;
-    if(d == d2) {
+    if(d == d4) {
         material = 0;
     } else if(d == d1) {
     }
 
     col = materials[material].color;
+
     return Hit(d, material, col, true);
 }
 
@@ -115,13 +136,13 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky) {
         float sun = clamp(dot(n, light_dir), 0.0, 1.0);
         float indirect = 0.1 * clamp(dot(n, normalize(light_dir * vec3(-1.0, 0.0, -1.0))), 0.0, 1.0);
 
-        vec3 light = sun * pow(vec3(shadow), vec3(1.3, 1.2, 1.5));
+        vec3 light = sun * d_light.color * pow(vec3(shadow), vec3(1.3, 1.2, 1.5));
 
         light += sky * vec3(0.16, 0.20, 0.28) * occlusion;
-        //light += indirect * vec3(0.40, 0.28, 0.20) * occlusion;
+        light += indirect * vec3(0.40, 0.28, 0.20) * occlusion;
         light += mat_specular * shininess * shadow;
 
-        col *= light * d_light.color * d_light.intensity;
+        col *= light * d_light.intensity;
 
         return clamp(col, 0.0, 1.0);
     }
