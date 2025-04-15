@@ -1,4 +1,4 @@
-use glam::{Vec2, Vec3};
+use glam::{vec3, Vec2, Vec3};
 use std::{sync::Arc, time::Instant};
 use vulkano::{
     buffer::{Buffer, BufferContents, BufferCreateInfo, BufferUsage, Subbuffer},
@@ -508,6 +508,18 @@ impl ApplicationHandler for App {
                     cam_uu: self.camera.uu.to_array().into(),
                     cam_vv: self.camera.vv.to_array().into(),
                     cam_ww: self.camera.ww.to_array().into(),
+                    materials: [
+                        fragment::Material {
+                            specular: 0.5.into(),
+                            shininess: 120.0.into(),
+                            color: vec3(0.9, 0.0, 0.0).to_array().into()
+                        }.into(),
+                        fragment::Material {
+                            specular: 0.8.into(),
+                            shininess: 80.0.into(),
+                            color: vec3(0.8, 0.8, 0.8).to_array().into()
+                        }.into(),
+                    ],
                 };
 
                 let layout = rcx.pipeline.layout().clone();

@@ -17,13 +17,14 @@ Hit sdf(Ray ray, float t) {
     d = min(d, d2);
     vec3 col = vec3(0, 0, 0);
 
+    int material = 1;
     if(d == d2) {
-        col = vec3(0.8, 0, 0);
+        material = 0;
     } else if(d == d1) {
-        col = vec3(0.4, 0.4, 0.4);
     }
 
-    return Hit(d, 0, col, true);
+    col = materials[material].color;
+    return Hit(d, material, col, true);
 }
 
 vec3 normal(vec3 p) {
@@ -103,22 +104,26 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky) {
         float shadow = shadow(Ray(p + n * 0.0001, light_dir), 32);
 
         vec3 half_angle = normalize(-ray.direction + light_dir);
-        float shininess = pow(max(dot(n, half_angle), 0.), 120.0);
+
+        float mat_specular = materials[hit.material_index].specular;
+        float mat_shininess = materials[hit.material_index].shininess;
+
+        float shininess = pow(max(dot(n, half_angle), 0.), mat_shininess);
 
         vec3 col = hit.color;
 
         float sun = clamp(dot(n, light_dir), 0.0, 1.0);
+        float indirect = 0.1 * clamp(dot(n, normalize(light_dir * vec3(-1.0, 0.0, -1.0))), 0.0, 1.0);
 
-        vec3 light = sun * d_light.color;
-        light *= shadow;
-        light *= occlusion;
+        vec3 light = sun * pow(vec3(shadow), vec3(1.3, 1.2, 1.5));
 
-        light += 1.1 * shininess * shadow * d_light.color;
+        light += sky * vec3(0.16, 0.20, 0.28) * occlusion;
+        //light += indirect * vec3(0.40, 0.28, 0.20) * occlusion;
+        light += mat_specular * shininess * shadow;
 
-        // light += shadow * d_light.color; 
+        col *= light * d_light.color * d_light.intensity;
 
-        col *= light;
-        return col;
+        return clamp(col, 0.0, 1.0);
     }
 
     return res;
@@ -129,7 +134,7 @@ vec3 run(vec2 coord, vec2 screen, Camera camera) {
     p.y = -p.y;
 
     Ray ray = Ray(camera.position, normalize(p.x * camera.uu + p.y * camera.vv + 1.5 * camera.ww));
-    DirectionalLight d_light = DirectionalLight(normalize(vec3(-3., -1.5, -2.)), vec3(1., 0.85, 0.70));
+    DirectionalLight d_light = DirectionalLight(normalize(vec3(-3., -1.5, -2.)), vec3(1., 0.85, 0.70), 1.0);
 
     vec3 sky = clamp(vec3(0.5, 0.8, 1.) - (0.7 * ray.direction.y), 0.0, 1.0);
 

@@ -20,6 +20,13 @@ struct Hit {
 struct DirectionalLight {
     vec3 direction;
     vec3 color;
+    float intensity;
+};
+
+struct Material {
+    float specular;
+    float shininess;
+    vec3 color;
 };
 
 float sphere_sdf(vec3 p, float r) {
@@ -42,3 +49,5 @@ float line_sdf(vec3 p, vec3 a, vec3 b, float r) {
     float h = min(1.0, max(0.0, dot(pa, ba) / dot(ba, ba)));
     return (pa - h * ba).length() - r;
 }
+
+Material[2] materials;
