@@ -191,7 +191,7 @@ impl App {
 
         let rcx = None;
 
-        let camera = Camera::new_with_pos(Vec3::new(0., 2., 8.0), Vec3::new(0., -1., -5.));
+        let camera = Camera::new_with_pos(Vec3::new(-0.5, 3., 8.0), Vec3::new(0., -1., -5.));
 
         App {
             instance,

@@ -24,10 +24,10 @@ Hit sdf(Ray ray, float t) {
     {
         vec3 q = p;
 
-        float d2 = sphere_sdf(opRepLim(q - vec3(-0.5, 1.0, 3.), 3, -1, 1), 0.5);
-        float d3 = sphere_sdf(opRepLim(q - vec3(-0.5, 1.5, 3.), 3, -1, 1), 0.1);
+        float d2 = sphere_sdf(opRepLim(q - vec3(-0.5, 1.0, -1.), 3, -1, 1), 0.5);
+        float d3 = sphere_sdf(opRepLim(q - vec3(-0.5, 1.5, -1.), 3, -1, 1), 0.1);
         d4 = smooth_min(d3, d2, 0.7);
-        float d5 = box_sdf(opRepLim(q - vec3(-0.5, 0.0, 3.), 3, -1, 1), vec3(1., 0.5, 1.), 0.2);
+        float d5 = box_sdf(opRepLim(q - vec3(-0.5, 0.0, -1.), 3, -1, 1), vec3(1., 0.5, 1.), 0.2);
         d5 = smooth_min(d5, d1, 0.4);
         d = min(d4, d5);
         //d4 += 0.4;d
