@@ -512,11 +512,13 @@ impl ApplicationHandler for App {
                         fragment::Material {
                             specular: 1.9.into(),
                             shininess: 220.0.into(),
+                            roughness: 0.8.into(),
                             color: vec3(0.7, 0.0, 0.0).to_array().into()
                         }.into(),
                         fragment::Material {
                             specular: 0.8.into(),
                             shininess: 80.0.into(),
+                            roughness: 0.8.into(),
                             color: vec3(0.8, 0.8, 0.8).to_array().into()
                         }.into(),
                     ],

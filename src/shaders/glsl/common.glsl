@@ -26,6 +26,7 @@ struct DirectionalLight {
 struct Material {
     float specular;
     float shininess;
+    float roughness;
     vec3 color;
 };
 

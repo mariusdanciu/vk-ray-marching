@@ -9,13 +9,9 @@ vec3 repeat(vec3 pos, float offset) {
     return vec3(mod(pos.x + offset * 0.5, offset) - offset * 0.5, pos.y, mod(pos.z + offset * 0.5, offset) - offset * 0.5);
 }
 
-vec3 opRepLim( vec3 p,  float s,  float lima,  float limb ){
-    return vec3( p.x-s*clamp(round(p.x/s),lima,limb),
-            p.y,
-            p.z-s*clamp(round(p.z/s),lima,limb)
-    );
+vec3 opRepLim(vec3 p, float s, float lima, float limb) {
+    return vec3(p.x - s * clamp(round(p.x / s), lima, limb), p.y, p.z - s * clamp(round(p.z / s), lima, limb));
 }
-
 
 Hit sdf(Ray ray, float t) {
 
@@ -114,39 +110,65 @@ Hit ray_march(Ray ray) {
     return Hit(t, 0, vec3(0), false);
 }
 
-vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky) {
-    Hit hit = ray_march(ray);
+vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky, int bounce) {
 
-    if(hit.hit) {
-        vec3 p = ray.origin + ray.direction * hit.dist;
-        vec3 n = normal(p);
-        vec3 light_dir = -d_light.direction;
-        float occlusion = occlusion(p, n);
-        float shadow = shadow(Ray(p + n * 0.0001, light_dir), 32);
+    vec3 refl_col = vec3(0);
+    float refl_roughness = -1.0;
+    bool need_mix = false;
 
-        vec3 half_angle = normalize(-ray.direction + light_dir);
+    for(int bounce = 0; bounce < 3; bounce++) {
 
-        float mat_specular = materials[hit.material_index].specular;
-        float mat_shininess = materials[hit.material_index].shininess;
+        Hit hit = ray_march(ray);
 
-        float shininess = pow(max(dot(n, half_angle), 0.), mat_shininess);
+        if(hit.hit) {
+            vec3 p = ray.origin + ray.direction * hit.dist;
+            vec3 n = normal(p);
+            vec3 light_dir = -d_light.direction;
+            float occlusion = occlusion(p, n);
+            float shadow = shadow(Ray(p + n * 0.0001, light_dir), 32);
 
-        vec3 col = hit.color;
+            vec3 half_angle = normalize(-ray.direction + light_dir);
 
-        float sun = clamp(dot(n, light_dir), 0.0, 1.0);
-        float indirect = 0.1 * clamp(dot(n, normalize(light_dir * vec3(-1.0, 0.0, -1.0))), 0.0, 1.0);
+            Material material = materials[hit.material_index];
+            float mat_specular = material.specular;
+            float mat_shininess = material.shininess;
 
-        vec3 light = sun * d_light.color * pow(vec3(shadow), vec3(1.3, 1.2, 1.5));
+            vec3 col = hit.color;
 
-        light += sky * vec3(0.16, 0.20, 0.28) * occlusion;
-        light += indirect * vec3(0.40, 0.28, 0.20) * occlusion;
-        light += mat_specular * shininess * shadow;
+            float shininess = pow(max(dot(n, half_angle), 0.), mat_shininess);
 
-        col *= light * d_light.intensity;
+            float sun = clamp(dot(n, light_dir), 0.0, 1.0);
+            float indirect = 0.1 * clamp(dot(n, normalize(light_dir * vec3(-1.0, 0.0, -1.0))), 0.0, 1.0);
 
-        return clamp(col, 0.0, 1.0);
+            vec3 light = sun * d_light.color * pow(vec3(shadow), vec3(1.3, 1.2, 1.5));
+
+            light += sky * vec3(0.16, 0.20, 0.28) * occlusion;
+            light += indirect * vec3(0.40, 0.28, 0.20) * occlusion;
+            light += mat_specular * shininess * shadow;
+
+            col *= light * d_light.intensity;
+
+            res = clamp(col, 0.0, 1.0);
+
+            if (refl_roughness >= 0) {
+                res = mix(res, refl_col, refl_roughness);
+            }
+
+            if (material.roughness < 1.0) {
+                vec3 refl = normalize(reflect(ray.direction, n));
+                ray = Ray(p + n * 0.01, refl);
+                refl_col = res;
+                refl_roughness = material.roughness;
+            } else {
+                refl_roughness = -1;
+            }
+        } else {
+            if (refl_roughness >= 0) {
+                res = mix(res, refl_col, refl_roughness);
+            }
+            break;
+        }
     }
-
     return res;
 }
 
@@ -169,7 +191,7 @@ vec3 run(vec2 coord, vec2 screen, Camera camera) {
     res += 0.25 * vec3(1.0, 0.6, 0.6) * pow(sundot, 64.0);
     res += 0.25 * vec3(1.0, 0.9, 0.6) * pow(sundot, 512.0);
 
-    res = path_trace(ray, d_light, res, sky);
+    res = path_trace(ray, d_light, res, sky, 0);
 
     res = pow(res, vec3(0.4545));
     return res;
