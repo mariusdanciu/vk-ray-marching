@@ -36,7 +36,7 @@ float sphere_sdf(vec3 p, float r) {
 
 float box_sdf(vec3 p, vec3 dimension, float corner_radius) {
     vec3 q = abs(p) - dimension + corner_radius;
-    return max(vec3(0), q).length() + min(max(q.x, max(q.y, q.z)), 0.0) - corner_radius;
+    return length(max(vec3(0), q)) + min(max(q.x, max(q.y, q.z)), 0.0) - corner_radius;
 }
 
 float cylinder_sdf(vec3 p, float radius, float height, float corner_radius) {
