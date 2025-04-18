@@ -1,46 +1,8 @@
-
-#include <common.glsl>
+#include <scene.glsl>
 
 #define MAX_STEPS 300
 #define HIT_PRECISION 0.001
 #define MAX_DISTANCE 100.0
-
-
-vec3 repeat(vec3 p, float s, float lima, float limb) {
-    return vec3(p.x - s * clamp(round(p.x / s), lima, limb), p.y, p.z - s * clamp(round(p.z / s), lima, limb));
-}
-
-Hit sdf(Ray ray, float t) {
-
-    vec3 p = ray.origin + ray.direction * t;
-
-    float d1 = p.y;
-    float d4 = 0;
-    float d = d1;
-
-    {
-        vec3 q = p;
-
-        float d2 = sphere_sdf(repeat(q - vec3(-0.5, 1.0, -1.), 3, -1, 1), 0.5);
-        float d3 = sphere_sdf(repeat(q - vec3(-0.5, 1.5, -1.), 3, -1, 1), 0.1);
-        d4 = smooth_min(d3, d2, 0.7);
-        float d5 = box_sdf(repeat(q - vec3(-0.5, 0.0, -1.), 3, -1, 1), vec3(1., 0.5, 1.), 0.2);
-        d5 = smooth_min(d5, d1, 0.4);
-        d = min(d4, d5);
-    }
-
-
-    vec3 col = vec3(0, 0, 0);
-
-    int material = 1;
-    if(d == d4) {
-        material = 0;
-    }
-
-    col = materials[material].color;
-
-    return Hit(d, material, col, true);
-}
 
 vec3 normal(vec3 p) {
     float k = 0.5773 * 0.0005;

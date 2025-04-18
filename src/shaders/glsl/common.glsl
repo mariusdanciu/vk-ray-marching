@@ -61,4 +61,8 @@ vec3 smooth_min_vec4(vec4 d1, vec4 d2, float k) {
     return mix(d2.xyz, d1.xyz, h) - k * h * (1. - h);
 }
 
+vec3 repeat(vec3 p, float s, float lima, float limb) {
+    return vec3(p.x - s * clamp(round(p.x / s), lima, limb), p.y, p.z - s * clamp(round(p.z / s), lima, limb));
+}
+
 Material[2] materials;
