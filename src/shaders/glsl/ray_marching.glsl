@@ -80,7 +80,7 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky, int bounc
 
         Hit hit = ray_march(ray);
 
-        if(hit.hit) {
+        if (hit.hit) {
             vec3 p = ray.origin + ray.direction * hit.dist;
             vec3 n = normal(p);
             vec3 light_dir = -d_light.direction;
@@ -100,7 +100,7 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky, int bounc
             float sun = clamp(dot(n, light_dir), 0.0, 1.0);
             float indirect = 0.1 * clamp(dot(n, normalize(light_dir * vec3(-1.0, 0.0, -1.0))), 0.0, 1.0);
 
-            vec3 light = sun * d_light.color * pow(vec3(shadow), vec3(1.3, 1.2, 1.5));
+            vec3 light = material.diffuse * sun * d_light.color * pow(vec3(shadow), vec3(1.3, 1.2, 1.5));
 
             light += sky * vec3(0.16, 0.20, 0.28) * occlusion;
             light += indirect * vec3(0.40, 0.28, 0.20) * occlusion;
@@ -110,11 +110,11 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky, int bounc
 
             res = clamp(col, 0.0, 1.0);
 
-            if (refl_roughness >= 0) {
+            if(refl_roughness >= 0) {
                 res = mix(res, refl_col, refl_roughness);
             }
 
-            if (material.roughness < 1.0) {
+            if(material.roughness < 1.0) {
                 vec3 refl = normalize(reflect(ray.direction, n));
                 ray = Ray(p + n * 0.01, refl);
                 refl_col = res;
@@ -123,7 +123,7 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky, int bounc
                 refl_roughness = -1;
             }
         } else {
-            if (refl_roughness >= 0) {
+            if(refl_roughness >= 0) {
                 res = mix(res, refl_col, refl_roughness);
             }
             break;
