@@ -7,10 +7,11 @@ Hit sdf(Ray ray, float t) {
     float d1 = p.y;
     float d4 = 0;
     float d = d1;
+    vec3 id = vec3(0);
 
     {
         vec3 q = p;
-
+        id = round((q - vec3(-0.5, 1.5, -1.)) / 3);
         float d2 = sphere_sdf(repeat_xz(q - vec3(-0.5, 1.0, -1.), 3, -1, 1), 0.5);
         float d3 = sphere_sdf(repeat_xz(q - vec3(-0.5, 1.5, -1.), 3, -1, 1), 0.1);
         d4 = smooth_min(d3, d2, 0.7);
@@ -28,6 +29,10 @@ Hit sdf(Ray ray, float t) {
     }
 
     col = materials[material].color;
+
+    if (d == d4) {
+        col = abs(id) + 0.3;
+    }
 
     return Hit(d, material, col, true);
 }
