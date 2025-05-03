@@ -517,11 +517,11 @@ impl ApplicationHandler for App {
                             color: vec3(0.7, 0.0, 0.0).to_array().into()
                         }.into(),
                         fragment::Material {
-                            specular: 0.8.into(),
+                            specular: 0.5.into(),
                             shininess: 80.0.into(),
                             roughness: 0.8.into(),
                             diffuse: 1.1.into(),
-                            color: vec3(0.8, 0.8, 0.8).to_array().into()
+                            color: vec3(0.9, 0.9, 0.8).to_array().into()
                         }.into(),
                     ],
                 };
