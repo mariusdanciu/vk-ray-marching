@@ -61,6 +61,8 @@ pub struct App {
     cam_left: bool,
     cam_right: bool,
     frame_time: Instant,
+    fps: u32,
+    timer: Instant,
 }
 
 struct RenderContext {
@@ -209,6 +211,8 @@ impl App {
             cam_right: false,
             cam_up: false,
             frame_time: Instant::now(),
+            fps: 0u32,
+            timer: Instant::now(),
         }
     }
 }
@@ -463,6 +467,8 @@ impl ApplicationHandler for App {
                 rcx.recreate_swapchain = true;
             }
             WindowEvent::RedrawRequested => {
+
+                
                 let window_size = rcx.window.inner_size();
 
                 if window_size.width == 0 || window_size.height == 0 {
@@ -514,15 +520,17 @@ impl ApplicationHandler for App {
                             shininess: 620.0.into(),
                             roughness: 0.8.into(),
                             diffuse: 0.9.into(),
-                            color: vec3(0.7, 0.0, 0.0).to_array().into()
-                        }.into(),
+                            color: vec3(0.7, 0.0, 0.0).to_array().into(),
+                        }
+                        .into(),
                         fragment::Material {
                             specular: 0.5.into(),
                             shininess: 80.0.into(),
                             roughness: 0.8.into(),
                             diffuse: 1.1.into(),
-                            color: vec3(0.9, 0.9, 0.8).to_array().into()
-                        }.into(),
+                            color: vec3(0.9, 0.9, 0.8).to_array().into(),
+                        }
+                        .into(),
                     ],
                 };
 
@@ -581,6 +589,15 @@ impl ApplicationHandler for App {
 
                 match future.map_err(Validated::unwrap) {
                     Ok(future) => {
+                        self.fps += 1;
+
+                        let millis = self.timer.elapsed().as_millis();
+                
+                        if millis > 1000 {
+                            self.timer = Instant::now();
+                            rcx.window.set_title(format!("FPS {}", self.fps).as_str());
+                            self.fps = 0;
+                        }
                         rcx.previous_frame_end = Some(future.boxed());
                     }
                     Err(VulkanError::OutOfDate) => {
