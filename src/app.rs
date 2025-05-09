@@ -467,8 +467,7 @@ impl ApplicationHandler for App {
                 rcx.recreate_swapchain = true;
             }
             WindowEvent::RedrawRequested => {
-
-                
+            
                 let window_size = rcx.window.inner_size();
 
                 if window_size.width == 0 || window_size.height == 0 {
@@ -506,6 +505,16 @@ impl ApplicationHandler for App {
 
                 if suboptimal {
                     rcx.recreate_swapchain = true;
+                }
+
+                self.fps += 1;
+
+                let millis = self.timer.elapsed().as_millis();
+        
+                if millis > 1000 {
+                    self.timer = Instant::now();
+                    rcx.window.set_title(format!("FPS {}", self.fps).as_str());
+                    self.fps = 0;
                 }
 
                 let pc_screen = fragment::AppData {
@@ -589,15 +598,7 @@ impl ApplicationHandler for App {
 
                 match future.map_err(Validated::unwrap) {
                     Ok(future) => {
-                        self.fps += 1;
 
-                        let millis = self.timer.elapsed().as_millis();
-                
-                        if millis > 1000 {
-                            self.timer = Instant::now();
-                            rcx.window.set_title(format!("FPS {}", self.fps).as_str());
-                            self.fps = 0;
-                        }
                         rcx.previous_frame_end = Some(future.boxed());
                     }
                     Err(VulkanError::OutOfDate) => {

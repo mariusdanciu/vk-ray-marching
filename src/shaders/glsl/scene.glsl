@@ -25,7 +25,7 @@ Hit sdf(Ray ray, float t) {
     int material = 1;
     vec3 col = materials[material].color;
 
-    if(d == d4) {
+    if (d == d4) {
         material = 0;
         col = abs(id) + 0.3;
     } else if (d == d1 || d == d5) {
