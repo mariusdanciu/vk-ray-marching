@@ -114,7 +114,7 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky, int bounc
                 res = mix(res, refl_col, refl_roughness);
             }
 
-            if(material.roughness < 1.0) {
+            if (material.roughness < 1.0) {
                 vec3 refl = normalize(reflect(ray.direction, n));
                 ray = Ray(p + n * 0.01, refl);
                 refl_col = res;
@@ -123,7 +123,7 @@ vec3 path_trace(Ray ray, DirectionalLight d_light, vec3 res, vec3 sky, int bounc
                 refl_roughness = -1;
             }
         } else {
-            if(refl_roughness >= 0) {
+            if (refl_roughness >= 0) {
                 res = mix(res, refl_col, refl_roughness);
             }
             break;

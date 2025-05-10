@@ -467,13 +467,14 @@ impl ApplicationHandler for App {
                 rcx.recreate_swapchain = true;
             }
             WindowEvent::RedrawRequested => {
-            
                 let window_size = rcx.window.inner_size();
 
                 if window_size.width == 0 || window_size.height == 0 {
                     return;
                 }
-                rcx.previous_frame_end.as_mut().unwrap().cleanup_finished();
+                if self.fps == 0 {
+                    rcx.previous_frame_end.as_mut().unwrap().cleanup_finished();
+                }
                 if rcx.recreate_swapchain {
                     let (new_swapchain, new_images) = rcx
                         .swapchain
@@ -507,10 +508,8 @@ impl ApplicationHandler for App {
                     rcx.recreate_swapchain = true;
                 }
 
-                self.fps += 1;
-
                 let millis = self.timer.elapsed().as_millis();
-        
+
                 if millis > 1000 {
                     self.timer = Instant::now();
                     rcx.window.set_title(format!("FPS {}", self.fps).as_str());
@@ -584,7 +583,6 @@ impl ApplicationHandler for App {
 
                 let mut sc_info =
                     SwapchainPresentInfo::swapchain_image_index(rcx.swapchain.clone(), image_index);
-                //sc_info.present_mode = Some(vulkano::swapchain::PresentMode::Fifo);
 
                 let future = rcx
                     .previous_frame_end
@@ -598,8 +596,8 @@ impl ApplicationHandler for App {
 
                 match future.map_err(Validated::unwrap) {
                     Ok(future) => {
-
                         rcx.previous_frame_end = Some(future.boxed());
+                        self.fps += 1;
                     }
                     Err(VulkanError::OutOfDate) => {
                         rcx.recreate_swapchain = true;
