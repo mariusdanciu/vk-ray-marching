@@ -62,8 +62,12 @@ pub struct App {
     cam_right: bool,
     frame_time: Instant,
     fps: u32,
+    ups: u32,
+    lag: u32,
     timer: Instant,
 }
+
+const NANOS: f32 = 1000000000. / 60.;
 
 struct RenderContext {
     window: Arc<Window>,
@@ -212,6 +216,8 @@ impl App {
             cam_up: false,
             frame_time: Instant::now(),
             fps: 0u32,
+            ups: 0u32,
+            lag: 0u32,
             timer: Instant::now(),
         }
     }
@@ -510,10 +516,22 @@ impl ApplicationHandler for App {
 
                 let millis = self.timer.elapsed().as_millis();
 
+                self.lag += millis as u32;
+
+                while self.lag >= 16 {
+                    // Update state
+
+                    self.lag -= 16;
+                }
+
+                self.ups += 1;
+
                 if millis > 1000 {
                     self.timer = Instant::now();
-                    rcx.window.set_title(format!("FPS {}", self.fps).as_str());
+                    rcx.window
+                        .set_title(format!("FPS {} UPS {}", self.fps, self.ups).as_str());
                     self.fps = 0;
+                    self.ups = 0;
                 }
 
                 let pc_screen = fragment::AppData {
@@ -525,7 +543,7 @@ impl ApplicationHandler for App {
                     materials: [
                         fragment::Material {
                             specular: 2.9.into(),
-                            shininess: 620.0.into(),
+                            shininess: 320.0.into(),
                             roughness: 0.8.into(),
                             diffuse: 0.9.into(),
                             color: vec3(0.7, 0.0, 0.0).to_array().into(),
